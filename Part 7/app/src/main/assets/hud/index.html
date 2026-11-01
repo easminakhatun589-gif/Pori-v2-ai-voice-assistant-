@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>JARVIS — Mark 85 Arc Core</title>
+<style>
+  :root {
+    --bg-void: #050102;
+    --red-core: #ff1744;
+    --red-glow: #ff2a4b;
+    --red-deep: #7a000d;
+    --red-ember: #ff5252;
+    --red-bright: #ff7582;
+    --gold-accent: #ffb300;
+    --gold-bright: #ffe082;
+    --hud-border: rgba(255, 23, 68, 0.25);
+    --hud-border-bright: rgba(255, 42, 75, 0.75);
+    --hud-glass: rgba(14, 3, 6, 0.82);
+    --text-white: #ffffff;
+    --text-muted: #c99ea6;
+    --text-faint: #6e444c;
+    /* Use monospace and system-ui fallback to prevent cursive system themes */
+    --font-mono: "Roboto Mono", "SF Mono", "Droid Sans Mono", "Consolas", monospace;
+    --font-ui: system-ui, "Roboto", -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-void);
+    color: var(--text-white);
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body {
+    background: radial-gradient(circle at 50% 48%, #220207 0%, #0c0104 55%, #050102 100%);
+    overscroll-behavior: none;
+  }
+
+  .gpu { transform: translateZ(0); will-change: transform; }
+
+  /* Holographic background grid */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 23, 68, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 23, 68, 0.035) 1px, transparent 1px);
+    background-size: 30px 30px;
+    mask-image: radial-gradient(ellipse 95% 75% at 50% 50%, black 25%, transparent 85%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* HUD Viewport */
+  #hud {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 2;
+    padding: calc(44px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ============================================================
+     1. REDESIGNED STARK CYBER HUD HEADER
+     ============================================================ */
+  .header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 52px;
+    padding: 0 14px;
+    background: linear-gradient(180deg, rgba(22, 4, 8, 0.90) 0%, rgba(11, 2, 4, 0.75) 100%);
+    border: 1px solid rgba(255, 23, 68, 0.32);
+    border-radius: 16px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 14px rgba(255, 23, 68, 0.10);
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .brand-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .reactor-mini-glyph {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #ff5252 40%, #ff1744 75%, #6a000a 100%);
+    box-shadow: 0 0 10px #ff1744, 0 0 18px rgba(255, 23, 68, 0.6);
+    animation: miniCorePulse 2.4s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .reactor-mini-glyph::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 82, 82, 0.5);
+  }
+
+  @keyframes miniCorePulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px #ff1744); }
+    50% { transform: scale(1.1); filter: drop-shadow(0 0 10px #ff5252); }
+  }
+
+  .brand-text-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1;
+  }
+
+  .brand-title {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 23, 68, 0.7);
+    line-height: 1;
+  }
+
+  .brand-sub {
+    font-family: var(--font-mono);
+    font-size: 0.52rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #ff8a9e;
+    opacity: 0.85;
+    line-height: 1;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    background: rgba(255, 23, 68, 0.10);
+    border: 1px solid rgba(255, 23, 68, 0.4);
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ff8a9e;
+    box-shadow: inset 0 0 10px rgba(255, 23, 68, 0.15), 0 0 10px rgba(255, 23, 68, 0.1);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--red-core);
+    box-shadow: 0 0 8px var(--red-core);
+    transition: background 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hdr-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 23, 68, 0.12);
+    border: 1px solid rgba(255, 23, 68, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff8a9e;
+    cursor: pointer;
+    transition: transform 0.15s, background-color 0.2s, box-shadow 0.2s;
+  }
+
+  .hdr-btn:active {
+    transform: scale(0.90);
+    background: rgba(255, 23, 68, 0.3);
+    box-shadow: 0 0 14px rgba(255, 23, 68, 0.6);
+  }
+
+  .hdr-btn svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
+  }
+
+  /* HUD Status Bar Battery Indicator */
+  .battery-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    background: rgba(255, 23, 68, 0.08);
+    border: 1px solid rgba(255, 23, 68, 0.35);
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #ff8a9e;
+    box-shadow: inset 0 0 8px rgba(255, 23, 68, 0.12);
+    transition: all 0.3s ease;
+    user-select: none;
+    cursor: default;
+  }
+
+  .battery-pill.charging {
+    border-color: rgba(0, 230, 118, 0.5);
+    background: rgba(0, 230, 118, 0.08);
+    color: #69f0ae;
+    box-shadow: inset 0 0 8px rgba(0, 230, 118, 0.15), 0 0 8px rgba(0, 230, 118, 0.2);
+  }
+
+  .battery-pill.low {
+    border-color: rgba(255, 23, 68, 0.95);
+    background: rgba(255, 23, 68, 0.22);
+    color: #ff1744;
+    animation: batteryLowWarningPulse 0.9s ease-in-out infinite alternate;
+  }
+
+  @keyframes batteryLowWarningPulse {
+    0% {
+      border-color: rgba(255, 23, 68, 0.5);
+      background: rgba(255, 23, 68, 0.12);
+      box-shadow: inset 0 0 8px rgba(255, 23, 68, 0.2), 0 0 6px rgba(255, 23, 68, 0.3);
+      transform: scale(1);
+    }
+    100% {
+      border-color: rgba(255, 23, 68, 1.0);
+      background: rgba(255, 23, 68, 0.35);
+      box-shadow: inset 0 0 16px rgba(255, 23, 68, 0.6), 0 0 18px rgba(255, 23, 68, 0.8);
+      transform: scale(1.04);
+    }
+  }
+
+  .battery-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 12px;
+  }
+
+  .battery-svg {
+    display: block;
+    overflow: visible;
+  }
+
+  .battery-bolt {
+    position: absolute;
+    display: none;
+    filter: drop-shadow(0 0 4px #ffd700);
+  }
+
+  .battery-pill.charging .battery-bolt {
+    display: block;
+  }
+
+  .battery-text {
+    font-size: 0.68rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ============================================================
+     2. MASSIVE UPGRADED STARK ARC REACTOR CORE (340px)
+     ============================================================ */
+  .orb-center-stage {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+  }
+
+  .reactor-housing {
+    position: relative;
+    width: 330px;
+    height: 330px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* Full Vector Arc Reactor SVG Elements */
+  .reactor-svg-rings {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* Ring 1: Caliper Ring */
+  .ring-calipers {
+    transform-origin: 165px 165px;
+    animation: rotateClockwise 36s linear infinite;
+  }
+
+  /* Ring 2: 10 Palladium / Energy Coils */
+  .ring-coils {
+    transform-origin: 165px 165px;
+    animation: rotateCounterClockwise 24s linear infinite;
+  }
+
+  /* Ring 3: Fine Inner Dashed Track */
+  .ring-inner-track {
+    transform-origin: 165px 165px;
+    animation: rotateClockwise 14s linear infinite;
+  }
+
+  @keyframes rotateClockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes rotateCounterClockwise {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+
+  /* Outer Energy Plasma Flare (Diffuse Bloom) */
+  .arc-plasma-bloom {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 23, 68, 0.45) 0%, rgba(255, 23, 68, 0.15) 55%, transparent 75%);
+    filter: blur(28px);
+    pointer-events: none;
+    transition: transform 0.2s, opacity 0.3s;
+  }
+
+  /* The Multi-Layer Fusion Core */
+  .arc-fusion-core {
+    position: relative;
+    width: 172px;
+    height: 172px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 45% 45%, #ff5252 0%, #ff1744 38%, #b71c1c 72%, #320005 100%);
+    box-shadow:
+      0 0 35px rgba(255, 23, 68, 0.95),
+      0 0 85px rgba(255, 23, 68, 0.55),
+      inset 0 0 30px rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    z-index: 10;
+  }
+
+  /* Palladium Segment Bevel Ring */
+  .arc-fusion-core::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255, 255, 255, 0.7);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(255, 138, 158, 0.4) 30%, transparent 68%);
+    filter: blur(1.5px);
+  }
+
+  /* Central Fusion Star Nucleus */
+  .arc-nucleus {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff 0%, #fff59d 30%, #ff8a9e 65%, #ff1744 100%);
+    box-shadow:
+      0 0 25px #ffffff,
+      0 0 50px #ff5252,
+      0 0 90px rgba(255, 23, 68, 0.85);
+    z-index: 15;
+    transition: transform 0.15s ease-out;
+  }
+
+  /* 8 Radial Magnetic Caliper Vents inside Core */
+  .caliper-vent {
+    position: absolute;
+    width: 4px;
+    height: 18px;
+    background: linear-gradient(180deg, #ffffff 0%, #ff1744 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 8px #ff1744;
+    z-index: 12;
+  }
+  .cv-1 { transform: rotate(0deg) translateY(-60px); }
+  .cv-2 { transform: rotate(45deg) translateY(-60px); }
+  .cv-3 { transform: rotate(90deg) translateY(-60px); }
+  .cv-4 { transform: rotate(135deg) translateY(-60px); }
+  .cv-5 { transform: rotate(180deg) translateY(-60px); }
+  .cv-6 { transform: rotate(225deg) translateY(-60px); }
+  .cv-7 { transform: rotate(270deg) translateY(-60px); }
+  .cv-8 { transform: rotate(315deg) translateY(-60px); }
+
+  /* Subtitle text under the orb in clean monospace */
+  .orb-caption {
+    margin-top: 26px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-shadow: 0 0 10px rgba(255, 23, 68, 0.4);
+    transition: color 0.3s;
+  }
+
+  /* ============================================================
+     3. DYNAMIC STATE ANIMATIONS
+     ============================================================ */
+  #hud[data-state="idle"] .arc-fusion-core {
+    animation: idlePulse 3.4s ease-in-out infinite;
+  }
+
+  @keyframes idlePulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 30px rgba(255, 23, 68, 0.8), 0 0 65px rgba(255, 23, 68, 0.4);
+    }
+    50% {
+      transform: scale(1.06);
+      box-shadow: 0 0 45px rgba(255, 23, 68, 1), 0 0 95px rgba(255, 42, 75, 0.65);
+    }
+  }
+
+  #hud[data-state="listening"] .arc-fusion-core {
+    box-shadow: 0 0 55px rgba(255, 23, 68, 1), 0 0 115px rgba(255, 42, 75, 0.85);
+    filter: brightness(1.15);
+  }
+
+  #hud[data-state="listening"] .status-dot {
+    background: #ff1744;
+    box-shadow: 0 0 14px #ff1744;
+  }
+
+  #hud[data-state="listening"] .ring-coils {
+    animation-duration: 6s;
+  }
+
+  #hud[data-state="thinking"] .arc-fusion-core {
+    animation: thinkingVortex 1.3s ease-in-out infinite;
+  }
+
+  @keyframes thinkingVortex {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 35px rgba(255, 145, 0, 0.9), 0 0 80px rgba(255, 23, 68, 0.6);
+    }
+    50% {
+      transform: scale(1.1);
+      box-shadow: 0 0 60px rgba(255, 87, 34, 1), 0 0 115px rgba(255, 23, 68, 0.9);
+      filter: brightness(1.25);
+    }
+  }
+
+  #hud[data-state="thinking"] .arc-nucleus {
+    background: radial-gradient(circle, #ffffff 0%, #ffe082 40%, #ff9100 80%, #ff1744 100%);
+    box-shadow: 0 0 35px #ffe082, 0 0 65px #ff9100;
+  }
+
+  #hud[data-state="thinking"] .status-dot {
+    background: #ff9100;
+    box-shadow: 0 0 14px #ff9100;
+  }
+
+  #hud[data-state="speaking"] .status-dot {
+    background: #ff5252;
+    box-shadow: 0 0 16px #ff5252;
+  }
+
+  /* ============================================================
+     4. CONTROL DOCK (REDESIGNED)
+     ============================================================ */
+  .control-dock {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 9px 12px;
+    background: var(--hud-glass);
+    border: 1px solid var(--hud-border);
+    border-radius: 26px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(255, 23, 68, 0.12);
+  }
+
+  .dock-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 7px 14px;
+    border-radius: 16px;
+    transition: transform 0.12s, color 0.2s, background-color 0.2s;
+  }
+
+  .dock-btn:active {
+    transform: scale(0.88);
+    background: rgba(255, 23, 68, 0.2);
+  }
+
+  .dock-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+    transition: transform 0.2s, filter 0.2s;
+  }
+
+  .dock-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* Center Elevated Mic Button */
+  .center-mic-btn {
+    --mic-escalation: 0;
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, #1c1733 55%, #0e0b1c 100%);
+    border: 2.6px solid #e3a869;
+    box-shadow: 0 0 22px rgba(255, 190, 105, 0.55), inset 0 0 12px rgba(86, 248, 238, 0.35), 0 6px 18px rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: -18px 4px 0 4px;
+    padding: 0;
+    overflow: visible;
+    transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    color: #ffffff;
+    touch-action: manipulation;
+    z-index: 5;
+  }
+
+  .center-mic-btn::before {
+    content: "";
+    position: absolute;
+    width: 78%;
+    height: 78%;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 34% 32%, #ffffff 0%, #9ef8ff 16%, transparent 42%),
+      radial-gradient(circle at 65% 38%, rgba(86, 255, 229, 0.85) 0%, transparent 50%),
+      radial-gradient(circle at 35% 70%, rgba(42, 232, 208, 0.85) 0%, transparent 52%),
+      conic-gradient(from 0deg, #0b4f7c, #2ae8d0, #072452, #38eefc, #0a367e, #56ffe5, #0b4f7c);
+    box-shadow: 0 0 14px rgba(156, 246, 255, 0.9), inset -5px -5px 12px rgba(2, 12, 32, 0.75);
+    animation: orbMicSpin3D 5.5s linear infinite;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  @keyframes orbMicSpin3D {
+    0% { transform: rotate(0deg) scale(1); filter: hue-rotate(0deg); }
+    50% { transform: rotate(180deg) scale(1.04); filter: hue-rotate(10deg); }
+    100% { transform: rotate(360deg) scale(1); filter: hue-rotate(0deg); }
+  }
+
+  .center-mic-btn:active,
+  .center-mic-btn.is-holding {
+    transform: scale(calc(0.94 + var(--mic-escalation, 0) * 0.04));
+    border-color: #ffe082;
+    box-shadow:
+      0 0 calc(32px + var(--mic-escalation, 0) * 14px) rgba(86, 248, 238, 0.98),
+      0 0 calc(48px + var(--mic-escalation, 0) * 22px) rgba(255, 190, 105, 0.75),
+      inset 0 0 18px rgba(158, 248, 255, 0.85);
+  }
+
+  .center-mic-btn.is-holding::before {
+    animation-duration: 1.8s;
+    filter: brightness(1.22);
+  }
+
+  /* Escalating Visual Ripple Effect Container & Waves for #btn-mic Hold */
+  .mic-ripple-container {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    overflow: visible;
+  }
+
+  .mic-ripple-wave,
+  .mic-escalating-ripple {
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.85);
+    border: 2px solid rgba(86, 248, 238, 0.85);
+    background: radial-gradient(circle, rgba(86, 248, 238, 0.32) 0%, rgba(255, 190, 105, 0.18) 55%, transparent 78%);
+    box-shadow: 0 0 16px rgba(86, 248, 238, 0.75), inset 0 0 10px rgba(255, 224, 130, 0.45);
+    will-change: transform, opacity;
+  }
+
+  .center-mic-btn.is-holding .mic-ripple-wave.wave-1 {
+    animation: micHoldRippleStage1 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .center-mic-btn.is-holding .mic-ripple-wave.wave-2 {
+    animation: micHoldRippleStage2 0.68s cubic-bezier(0.16, 1, 0.3, 1) 0.12s forwards;
+  }
+
+  .center-mic-btn.is-holding .mic-ripple-wave.wave-3 {
+    animation: micHoldRippleStage3 0.82s cubic-bezier(0.16, 1, 0.3, 1) 0.24s infinite;
+  }
+
+  .mic-escalating-ripple.stage-1 {
+    animation: micHoldRippleStage1 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .mic-escalating-ripple.stage-2 {
+    border-color: rgba(158, 248, 255, 0.92);
+    border-width: 2.4px;
+    box-shadow: 0 0 22px rgba(86, 248, 238, 0.9), 0 0 36px rgba(255, 190, 105, 0.55);
+    animation: micHoldRippleStage2 0.58s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .mic-escalating-ripple.stage-3 {
+    border-color: rgba(255, 224, 130, 0.96);
+    border-width: 2.8px;
+    background: radial-gradient(circle, rgba(255, 224, 130, 0.38) 0%, rgba(86, 248, 238, 0.26) 50%, rgba(255, 23, 68, 0.18) 72%, transparent 88%);
+    box-shadow: 0 0 28px rgba(255, 224, 130, 0.95), 0 0 48px rgba(86, 248, 238, 0.8);
+    animation: micHoldRippleStage3 0.64s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .mic-escalating-ripple.stage-4 {
+    border-color: #ffffff;
+    border-width: 3.2px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.45) 0%, rgba(86, 248, 238, 0.35) 45%, rgba(255, 23, 68, 0.28) 70%, transparent 90%);
+    box-shadow: 0 0 36px rgba(255, 255, 255, 0.98), 0 0 64px rgba(255, 23, 68, 0.9);
+    animation: micHoldRipplePeak 0.70s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes micHoldRippleStage1 {
+    0% { transform: scale(0.88); opacity: 0.92; }
+    70% { opacity: 0.45; }
+    100% { transform: scale(1.48); opacity: 0; }
+  }
+
+  @keyframes micHoldRippleStage2 {
+    0% { transform: scale(0.92); opacity: 0.96; }
+    65% { opacity: 0.55; }
+    100% { transform: scale(1.86); opacity: 0; }
+  }
+
+  @keyframes micHoldRippleStage3 {
+    0% { transform: scale(0.96); opacity: 1; }
+    60% { opacity: 0.62; }
+    100% { transform: scale(2.28); opacity: 0; }
+  }
+
+  @keyframes micHoldRipplePeak {
+    0% { transform: scale(1.0); opacity: 1; }
+    55% { opacity: 0.72; }
+    100% { transform: scale(2.68); opacity: 0; }
+  }
+
+  .center-mic-btn svg {
+    display: none;
+  }
+
+  .btn-active {
+    color: #ff5252 !important;
+  }
+
+  .btn-active svg {
+    filter: drop-shadow(0 0 8px #ff1744);
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<div id="hud" data-state="idle">
+  <!-- 1. Sleek Redesigned HUD Header -->
+  <header class="header-bar gpu">
+    <div class="brand-area" id="core-mark-btn" title="View Chat History">
+      <div class="reactor-mini-glyph"></div>
+      <div class="brand-text-col">
+        <span class="brand-title">JARVIS</span>
+        <span class="brand-sub">MARK 85</span>
+      </div>
+    </div>
+
+    <div class="status-pill" id="status-chip">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">ONLINE</span>
+    </div>
+
+    <div class="header-actions">
+      <!-- HUD Status Bar Battery Display -->
+      <div class="battery-pill" id="battery-status" title="Device Battery Level">
+        <div class="battery-icon-wrap">
+          <svg class="battery-svg" viewBox="0 0 24 12" width="22" height="11">
+            <rect x="1" y="1" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <path d="M20 4.5 C21 4.5, 21.5 5, 21.5 6 C21.5 7, 21 7.5, 20 7.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <rect id="battery-level-bar" x="2.5" y="2.5" width="15" height="7" rx="1" fill="currentColor" />
+          </svg>
+          <svg class="battery-bolt" id="battery-charging-bolt" viewBox="0 0 10 16" width="9" height="12">
+            <polygon points="5,0 0,9 4.5,9 3.5,16 9.5,7 5,7" fill="#ffd700" />
+          </svg>
+        </div>
+        <span class="battery-text" id="battery-percent-text">100%</span>
+      </div>
+
+      <!-- Hidden clock element preserves JS timer callbacks without visual clutter -->
+      <div id="live-clock" style="display: none;"></div>
+      <button class="hdr-btn" id="hdr-settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. Massive Upgraded Stark Arc Reactor Core (Center Stage) -->
+  <main class="orb-center-stage">
+    <div class="reactor-housing gpu" id="reactor-assembly">
+      <!-- High-Precision SVG Mechanical Rings -->
+      <svg class="reactor-svg-rings" viewBox="0 0 330 330">
+        <!-- Ring 1: Caliper Brackets -->
+        <g class="ring-calipers">
+          <circle cx="165" cy="165" r="158" fill="none" stroke="#ff1744" stroke-width="1.5" stroke-dasharray="2 10" opacity="0.45"/>
+          <circle cx="165" cy="165" r="150" fill="none" stroke="#ff5252" stroke-width="1" stroke-dasharray="24 14 6 14" opacity="0.55"/>
+          <!-- Cardinal Tick Marks -->
+          <line x1="165" y1="5" x2="165" y2="18" stroke="#ff1744" stroke-width="2.5"/>
+          <line x1="165" y1="312" x2="165" y2="325" stroke="#ff1744" stroke-width="2.5"/>
+          <line x1="5" y1="165" x2="18" y2="165" stroke="#ff1744" stroke-width="2.5"/>
+          <line x1="312" y1="165" x2="325" y2="165" stroke="#ff1744" stroke-width="2.5"/>
+        </g>
+
+        <!-- Ring 2: 10 Palladium Energy Coils -->
+        <g class="ring-coils">
+          <circle cx="165" cy="165" r="132" fill="none" stroke="#ffb300" stroke-width="1.5" stroke-dasharray="16 12" opacity="0.4"/>
+          <rect x="160" y="36" width="10" height="14" rx="2" fill="#ff1744" opacity="0.9"/>
+          <rect x="238" y="62" width="10" height="14" rx="2" fill="#ff5252" opacity="0.8" transform="rotate(36 243 69)"/>
+          <rect x="282" y="132" width="10" height="14" rx="2" fill="#ff1744" opacity="0.9" transform="rotate(72 287 139)"/>
+          <rect x="268" y="212" width="10" height="14" rx="2" fill="#ff5252" opacity="0.8" transform="rotate(108 273 219)"/>
+          <rect x="202" y="270" width="10" height="14" rx="2" fill="#ff1744" opacity="0.9" transform="rotate(144 207 277)"/>
+          <rect x="120" y="270" width="10" height="14" rx="2" fill="#ff5252" opacity="0.8" transform="rotate(180 125 277)"/>
+          <rect x="54" y="212" width="10" height="14" rx="2" fill="#ff1744" opacity="0.9" transform="rotate(216 59 219)"/>
+          <rect x="40" y="132" width="10" height="14" rx="2" fill="#ff5252" opacity="0.8" transform="rotate(252 45 139)"/>
+          <rect x="84" y="62" width="10" height="14" rx="2" fill="#ff1744" opacity="0.9" transform="rotate(288 89 69)"/>
+        </g>
+
+        <!-- Ring 3: Fine Inner Dashed Track -->
+        <g class="ring-inner-track">
+          <circle cx="165" cy="165" r="108" fill="none" stroke="#ff1744" stroke-width="2" stroke-dasharray="4 6" opacity="0.75"/>
+          <circle cx="165" cy="165" r="100" fill="none" stroke="#ffb300" stroke-width="1" stroke-dasharray="1 8" opacity="0.5"/>
+        </g>
+      </svg>
+
+      <!-- Outer Plasma Bloom -->
+      <div class="arc-plasma-bloom" id="arc-plasma-bloom"></div>
+
+      <!-- Multi-Layer Fusion Core -->
+      <div class="arc-fusion-core gpu" id="arc-core">
+        <!-- 8 Radial Caliper Magnetic Vents -->
+        <div class="caliper-vent cv-1"></div>
+        <div class="caliper-vent cv-2"></div>
+        <div class="caliper-vent cv-3"></div>
+        <div class="caliper-vent cv-4"></div>
+        <div class="caliper-vent cv-5"></div>
+        <div class="caliper-vent cv-6"></div>
+        <div class="caliper-vent cv-7"></div>
+        <div class="caliper-vent cv-8"></div>
+
+        <!-- Central Hyper-Dense Plasma Star -->
+        <div class="arc-nucleus" id="arc-nucleus"></div>
+      </div>
+    </div>
+
+    <!-- Dynamic Status Subtitle in Monospace -->
+    <div class="orb-caption" id="orb-caption">SYSTEM ONLINE • TAP TO SPEAK</div>
+  </main>
+
+  <!-- 3. Redesigned Control Dock (No Chat Section) -->
+  <footer style="width: 100%;">
+    <nav class="control-dock gpu">
+      <!-- Active / Sleep Toggle -->
+      <button class="dock-btn" id="btn-power" title="Sleep / Wake">
+        <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A7.92 7.92 0 0 1 20 12c0 4.42-3.58 8-8 8s-8-3.58-8-8c0-2.45 1.12-4.64 2.89-6.09L5.47 4.49A9.957 9.957 0 0 0 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10c0-2.76-1.12-5.26-2.93-7.07l-.24-.76z"/></svg>
+        <span class="dock-label" id="label-power">Active</span>
+      </button>
+
+      <!-- Vision Toggle -->
+      <button class="dock-btn" id="btn-vision" title="Screen Vision">
+        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        <span class="dock-label" id="label-vision">Vision</span>
+      </button>
+
+      <!-- Central Elevated Mic Button -->
+      <button class="center-mic-btn gpu" id="btn-mic" title="Voice Input" data-holding="false" data-hold-stage="0">
+        <span class="mic-ripple-container" id="mic-ripple-container" aria-hidden="true">
+          <span class="mic-ripple-wave wave-1"></span>
+          <span class="mic-ripple-wave wave-2"></span>
+          <span class="mic-ripple-wave wave-3"></span>
+        </span>
+        <svg id="mic-icon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+      </button>
+
+      <!-- Logs / History -->
+      <button class="dock-btn" id="btn-history" title="Chat History">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-2-4H7v-2h10v2zm0-4H7V9h10v2z"/></svg>
+        <span class="dock-label">History</span>
+      </button>
+
+      <!-- Settings / Config -->
+      <button class="dock-btn" id="btn-settings-bottom" title="Settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span class="dock-label">Config</span>
+      </button>
+    </nav>
+  </footer>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const hud = document.getElementById('hud');
+  const arcCore = document.getElementById('arc-core');
+  const arcNucleus = document.getElementById('arc-nucleus');
+  const reactorAssembly = document.getElementById('reactor-assembly');
+  const statusText = document.getElementById('status-text');
+  const liveClock = document.getElementById('live-clock');
+  const orbCaption = document.getElementById('orb-caption');
+
+  const btnMic = document.getElementById('btn-mic');
+  const btnPower = document.getElementById('btn-power');
+  const labelPower = document.getElementById('label-power');
+  const btnVision = document.getElementById('btn-vision');
+  const labelVision = document.getElementById('label-vision');
+  const btnHistory = document.getElementById('btn-history');
+  const btnSettings = document.getElementById('settings-trigger-btn');
+  const btnSettingsBottom = document.getElementById('btn-settings-bottom');
+
+  let currentState = 'idle';
+
+  function updateClock() {
+    const d = new Date();
+    if (liveClock) liveClock.textContent = d.toTimeString().split(' ')[0];
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // State Handler (OrbHelper calls window.setOrbState)
+  window.setOrbState = function(state, audioLevel) {
+    if (!state) return;
+    const s = state.toLowerCase();
+    currentState = s;
+    hud.dataset.state = s;
+
+    switch(s) {
+      case 'listening':
+        statusText.textContent = "LISTENING";
+        orbCaption.textContent = "TRANSCRIBING VOICE INPUT...";
+        orbCaption.style.color = "#34d399";
+        setMicPulse(audioLevel || 0.3);
+        break;
+      case 'thinking':
+        statusText.textContent = "THINKING";
+        orbCaption.textContent = "PROCESSING NEURAL RESPONSE...";
+        orbCaption.style.color = "#c084fc";
+        setThinkingPulse(audioLevel || 0.35);
+        break;
+      case 'speaking':
+        statusText.textContent = "TRANSMITTING";
+        orbCaption.textContent = "JARVIS TRANSMITTING AUDIO";
+        orbCaption.style.color = "#ff5252";
+        setSpeechPulse(audioLevel || 0.4);
+        break;
+      case 'idle':
+      default:
+        statusText.textContent = "ONLINE";
+        orbCaption.textContent = "SYSTEM ONLINE • TAP TO SPEAK";
+        orbCaption.style.color = "var(--text-muted)";
+        if (arcCore) arcCore.style.transform = '';
+        if (arcNucleus) arcNucleus.style.transform = '';
+        break;
+    }
+  };
+  window.updateState = window.setOrbState;
+
+  function setMicPulse(level) {
+    if (!arcCore) return;
+    const scale = 1.0 + Math.min(level * 0.48, 0.42);
+    arcCore.style.transform = `scale(${scale})`;
+    if (arcNucleus) {
+      const nScale = 1.0 + Math.min(level * 0.56, 0.48);
+      arcNucleus.style.transform = `scale(${nScale})`;
+    }
+    const glow = Math.min(32 + level * 85, 105);
+    arcCore.style.boxShadow = `0 0 ${glow}px rgba(16, 185, 129, 0.96), 0 0 ${glow * 2}px rgba(56, 189, 248, 0.65)`;
+  }
+
+  function setThinkingPulse(level) {
+    if (!arcCore) return;
+    const scale = 1.04 + Math.min(level * 0.32, 0.28);
+    arcCore.style.transform = `scale(${scale})`;
+    if (arcNucleus) {
+      const nScale = 1.08 + Math.min(level * 0.38, 0.34);
+      arcNucleus.style.transform = `scale(${nScale})`;
+    }
+    const glow = Math.min(38 + level * 75, 100);
+    arcCore.style.boxShadow = `0 0 ${glow}px rgba(168, 85, 247, 0.98), 0 0 ${glow * 2}px rgba(236, 72, 153, 0.65)`;
+  }
+
+  function setSpeechPulse(level) {
+    if (!arcCore) return;
+    const scale = 1.0 + Math.min(level * 0.44, 0.38);
+    arcCore.style.transform = `scale(${scale})`;
+    if (arcNucleus) {
+      const nScale = 1.0 + Math.min(level * 0.46, 0.40);
+      arcNucleus.style.transform = `scale(${nScale})`;
+    }
+    const glow = Math.min(28 + level * 75, 95);
+    arcCore.style.boxShadow = `0 0 ${glow}px rgba(255, 82, 82, 0.98), 0 0 ${glow * 1.8}px rgba(255, 23, 68, 0.55)`;
+  }
+
+  window.setAudioLevel = function(level) {
+    if (currentState === 'listening') {
+      setMicPulse(level);
+    } else if (currentState === 'thinking') {
+      setThinkingPulse(level);
+    } else if (currentState === 'speaking') {
+      setSpeechPulse(level);
+    }
+  };
+
+  window.setAudioFrequency = function(amp, pitchHz, bass, mid, high) {
+    const combined = Math.min(1, amp * 0.55 + bass * 0.30 + mid * 0.15);
+    if (currentState === 'listening') {
+      setMicPulse(combined);
+    } else if (currentState === 'thinking') {
+      setThinkingPulse(combined);
+    } else if (currentState === 'speaking') {
+      setSpeechPulse(combined);
+    }
+  };
+
+  window.setConnectionStatus = function(status) {
+    if (!status) return;
+    statusText.textContent = status.toUpperCase();
+  };
+  window.updateConnectionStatus = window.setConnectionStatus;
+
+  function renderLocalClock() {
+    if (!liveClock) return;
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    liveClock.textContent = `${hours}:${minutes} ${ampm}`;
+  }
+  renderLocalClock();
+  setInterval(renderLocalClock, 1000);
+
+  window.setLiveTime = function(t) {
+    renderLocalClock();
+  };
+  window.updateLiveTime = window.setLiveTime;
+
+  window.setPowerState = function(isOn) {
+    if (isOn) {
+      btnPower.classList.add('btn-active');
+      labelPower.textContent = "Active";
+      labelPower.style.color = "#ff8a9e";
+    } else {
+      btnPower.classList.remove('btn-active');
+      labelPower.textContent = "Sleep";
+      labelPower.style.color = "var(--text-muted)";
+    }
+  };
+  window.updatePowerState = window.setPowerState;
+
+  window.setMicMuted = function(isMuted) {
+    if (isMuted) {
+      btnMic.style.background = "#550a14";
+      btnMic.style.boxShadow = "0 0 10px rgba(255,23,68,0.3)";
+    } else {
+      btnMic.style.background = "radial-gradient(circle at 40% 40%, #ff5252 0%, #ff1744 55%, #990013 100%)";
+      btnMic.style.boxShadow = "0 0 26px rgba(255, 23, 68, 0.9), 0 6px 18px rgba(0, 0, 0, 0.6)";
+    }
+  };
+  window.updateMicMuted = window.setMicMuted;
+
+  window.setScreenShareState = function(isSharing) {
+    if (isSharing) {
+      btnVision.classList.add('btn-active');
+      labelVision.textContent = "Vision On";
+      labelVision.style.color = "#ff1744";
+    } else {
+      btnVision.classList.remove('btn-active');
+      labelVision.textContent = "Vision";
+      labelVision.style.color = "var(--text-muted)";
+    }
+  };
+  window.updateScreenShareState = window.setScreenShareState;
+
+  // Battery State Handler (Invoked natively by BatteryMonitorService / OrbHelper or battery API)
+  const batteryPill = document.getElementById('battery-status');
+  const batteryBar = document.getElementById('battery-level-bar');
+  const batteryBolt = document.getElementById('battery-charging-bolt');
+  const batteryPercentText = document.getElementById('battery-percent-text');
+
+  window.setBatteryState = function(percent, isCharging) {
+    if (percent === undefined || percent === null || isNaN(percent)) return;
+    const clamped = Math.max(0, Math.min(100, Math.round(Number(percent))));
+    const charging = Boolean(isCharging);
+    if (batteryPercentText) {
+      batteryPercentText.textContent = clamped + '%';
+    }
+    if (batteryBar) {
+      const barW = Math.max(1, (clamped / 100) * 15);
+      batteryBar.setAttribute('width', barW.toFixed(1));
+      if (charging) {
+        batteryBar.setAttribute('fill', '#69f0ae');
+      } else if (clamped <= 15) {
+        batteryBar.setAttribute('fill', '#ff1744');
+      } else {
+        batteryBar.setAttribute('fill', 'currentColor');
+      }
+    }
+    if (batteryBolt) {
+      batteryBolt.style.display = charging ? 'block' : 'none';
+    }
+    if (batteryPill) {
+      batteryPill.dataset.percent = String(clamped);
+      batteryPill.dataset.charging = String(charging);
+      if (charging) {
+        batteryPill.classList.add('charging');
+        batteryPill.classList.remove('low');
+      } else {
+        batteryPill.classList.remove('charging');
+        if (clamped <= 15) {
+          batteryPill.classList.add('low');
+        } else {
+          batteryPill.classList.remove('low');
+        }
+      }
+    }
+  };
+  window.updateBatteryState = window.setBatteryState;
+
+  if (typeof navigator !== 'undefined' && navigator.getBattery) {
+    navigator.getBattery().then(function(battery) {
+      window.setBatteryState(battery.level * 100, battery.charging);
+      battery.addEventListener('levelchange', function() {
+        window.setBatteryState(battery.level * 100, battery.charging);
+      });
+      battery.addEventListener('chargingchange', function() {
+        window.setBatteryState(battery.level * 100, battery.charging);
+      });
+    }).catch(function() {});
+  }
+
+  // Stubs for OrbHelper chat methods so no errors are thrown while chat section is removed
+  window.updateLiveUserTranscript = function() {};
+  window.updateLiveAssistantResponse = function() {};
+  window.finalizeLiveTurn = function() {};
+  window.syncChatTurns = function() {};
+
+  function triggerHapticFeedback(type, fallbackMs) {
+    try {
+      const hapticType = type || 'button';
+      if (window.JarvisBridge) {
+        if (typeof window.JarvisBridge.triggerHapticFeedback === 'function') {
+          window.JarvisBridge.triggerHapticFeedback(hapticType);
+          return;
+        }
+        if (typeof window.JarvisBridge.performHapticFeedback === 'function') {
+          window.JarvisBridge.performHapticFeedback(hapticType);
+          return;
+        }
+        if (typeof window.JarvisBridge.onSubtleTap === 'function') {
+          window.JarvisBridge.onSubtleTap();
+          return;
+        }
+      }
+      if (navigator.vibrate) {
+        navigator.vibrate(fallbackMs || 12);
+      }
+    } catch (e) {}
+  }
+
+  function triggerSubtleHaptic(ms) {
+    triggerHapticFeedback('button', ms || 10);
+  }
+
+  window.triggerHapticFeedback = triggerHapticFeedback;
+
+  // Interactive Click & Touch Handlers (Connecting to Native Android Bridge + Distinct Tactile Haptics)
+  [reactorAssembly, btnMic, btnPower, btnVision, btnHistory, btnSettings, btnSettingsBottom].forEach(function(el) {
+    if (!el) return;
+    const hapticType = (el === reactorAssembly)
+      ? 'orb'
+      : (el === btnMic ? 'mic' : (el === btnPower ? 'power' : 'button'));
+    el.addEventListener('pointerdown', function() {
+      triggerHapticFeedback(hapticType, 12);
+    }, { passive: true });
+  });
+
+  reactorAssembly.addEventListener('click', function() {
+    if (window.JarvisBridge && window.JarvisBridge.onOrbClicked) {
+      window.JarvisBridge.onOrbClicked();
+    } else {
+      triggerHapticFeedback('orb', 16);
+    }
+  });
+
+  const micRippleContainer = document.getElementById('mic-ripple-container');
+  let micHoldActive = false;
+  let micHoldStage = 0;
+  let micHoldInterval = null;
+  let micHoldReleaseTimer = null;
+
+  function spawnMicEscalatingRipple(stage) {
+    if (!btnMic) return null;
+    const container = micRippleContainer || btnMic;
+    const clampedStage = Math.max(1, Math.min(4, Number(stage) || 1));
+    const ripple = document.createElement('span');
+    ripple.className = 'mic-escalating-ripple stage-' + clampedStage;
+    ripple.dataset.stage = String(clampedStage);
+    container.appendChild(ripple);
+
+    const cleanup = function() {
+      if (ripple && ripple.parentNode) {
+        ripple.parentNode.removeChild(ripple);
+      }
+    };
+    ripple.addEventListener('animationend', cleanup, { once: true });
+    setTimeout(cleanup, 760);
+    return ripple;
+  }
+
+  function startMicHoldRipple() {
+    if (!btnMic || micHoldActive) return;
+    if (micHoldReleaseTimer) {
+      clearTimeout(micHoldReleaseTimer);
+      micHoldReleaseTimer = null;
+    }
+    micHoldActive = true;
+    micHoldStage = 1;
+    btnMic.classList.add('is-holding', 'ripple-active');
+    btnMic.dataset.holding = 'true';
+    btnMic.dataset.holdStage = '1';
+    btnMic.style.setProperty('--mic-escalation', '1');
+
+    // Immediate stage-1 ripple + tactile feedback when held down
+    spawnMicEscalatingRipple(1);
+    triggerHapticFeedback('mic', 12);
+
+    if (micHoldInterval) clearInterval(micHoldInterval);
+    micHoldInterval = setInterval(function() {
+      if (!micHoldActive) return;
+      micHoldStage = Math.min(4, micHoldStage + 1);
+      btnMic.dataset.holdStage = String(micHoldStage);
+      btnMic.style.setProperty('--mic-escalation', String(micHoldStage));
+      spawnMicEscalatingRipple(micHoldStage);
+      triggerHapticFeedback('mic', 10 + micHoldStage * 4);
+
+      if (micHoldStage === 3 && window.JarvisBridge && typeof window.JarvisBridge.onMicHold === 'function') {
+        window.JarvisBridge.onMicHold();
+      }
+    }, 150);
+  }
+
+  function stopMicHoldRipple() {
+    if (!btnMic) return;
+    const wasHolding = micHoldActive;
+    micHoldActive = false;
+    if (micHoldInterval) {
+      clearInterval(micHoldInterval);
+      micHoldInterval = null;
+    }
+    btnMic.dataset.holding = 'false';
+    if (wasHolding) {
+      // Keep brief visual trail so short presses/holds show the escalating ripple cleanly
+      micHoldReleaseTimer = setTimeout(function() {
+        if (!micHoldActive && btnMic) {
+          btnMic.classList.remove('is-holding', 'ripple-active');
+          btnMic.dataset.holdStage = '0';
+          btnMic.style.setProperty('--mic-escalation', '0');
+        }
+      }, 220);
+    } else {
+      btnMic.classList.remove('is-holding', 'ripple-active');
+      btnMic.dataset.holdStage = '0';
+      btnMic.style.setProperty('--mic-escalation', '0');
+    }
+  }
+
+  window.spawnMicEscalatingRipple = spawnMicEscalatingRipple;
+  window.startMicHoldRipple = startMicHoldRipple;
+  window.stopMicHoldRipple = stopMicHoldRipple;
+
+  if (btnMic) {
+    btnMic.addEventListener('pointerdown', function() {
+      startMicHoldRipple();
+    }, { passive: true });
+    btnMic.addEventListener('mousedown', function() {
+      startMicHoldRipple();
+    }, { passive: true });
+    btnMic.addEventListener('touchstart', function() {
+      startMicHoldRipple();
+    }, { passive: true });
+
+    ['pointerup', 'pointercancel', 'pointerleave', 'mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function(evtName) {
+      btnMic.addEventListener(evtName, function() {
+        stopMicHoldRipple();
+      }, { passive: true });
+    });
+
+    btnMic.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+  }
+
+  btnMic.addEventListener('click', function() {
+    if (window.JarvisBridge && window.JarvisBridge.onMicClicked) {
+      window.JarvisBridge.onMicClicked();
+    } else {
+      triggerHapticFeedback('mic', 16);
+    }
+  });
+
+  btnPower.addEventListener('click', function() {
+    if (window.JarvisBridge && window.JarvisBridge.onPowerClicked) {
+      window.JarvisBridge.onPowerClicked();
+    } else {
+      triggerHapticFeedback('power', 24);
+    }
+  });
+
+  btnVision.addEventListener('click', function() {
+    if (window.JarvisBridge && window.JarvisBridge.onScreenShareClicked) {
+      window.JarvisBridge.onScreenShareClicked();
+    } else {
+      triggerHapticFeedback('button', 12);
+    }
+  });
+
+  btnHistory.addEventListener('click', function() {
+    if (window.JarvisBridge && window.JarvisBridge.onHistoryClicked) {
+      window.JarvisBridge.onHistoryClicked();
+    } else {
+      triggerHapticFeedback('button', 12);
+    }
+  });
+
+  const coreMark = document.getElementById('core-mark-btn');
+  if (coreMark) {
+    coreMark.addEventListener('pointerdown', function() {
+      triggerHapticFeedback('button', 10);
+    }, { passive: true });
+    coreMark.addEventListener('click', function() {
+      if (window.JarvisBridge && window.JarvisBridge.onHistoryClicked) {
+        window.JarvisBridge.onHistoryClicked();
+      } else {
+        triggerHapticFeedback('button', 12);
+      }
+    });
+  }
+
+  function openSettings() {
+    if (window.JarvisBridge && window.JarvisBridge.onSettingsClicked) {
+      window.JarvisBridge.onSettingsClicked();
+    } else {
+      triggerHapticFeedback('button', 12);
+    }
+  }
+
+  const hdrSettings = document.getElementById('hdr-settings-btn');
+  if (hdrSettings) {
+    hdrSettings.addEventListener('pointerdown', function() {
+      triggerHapticFeedback('button', 10);
+    }, { passive: true });
+    hdrSettings.addEventListener('click', openSettings);
+  }
+  if (btnSettings) btnSettings.addEventListener('click', openSettings);
+  if (btnSettingsBottom) btnSettingsBottom.addEventListener('click', openSettings);
+
+  window.setOrbState('idle', 0);
+})();
+</script>
+</body>
+</html>

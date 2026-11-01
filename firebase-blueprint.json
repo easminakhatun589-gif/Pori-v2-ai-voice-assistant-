@@ -1,0 +1,191 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Cloud-synced JARVIS/Pari user profile and persona preferences.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase user UID matching document ID."
+        },
+        "userName": {
+          "type": "string",
+          "description": "Display name used by JARVIS/Pari to address the user (1..80 chars)."
+        },
+        "personality": {
+          "type": "string",
+          "description": "Active assistant persona (e.g. Pari, Jarvis, Kabir)."
+        },
+        "language": {
+          "type": "string",
+          "description": "Preferred conversation language setting."
+        },
+        "voiceTone": {
+          "type": "string",
+          "description": "Optional companion voice tone preference."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of profile creation (clients must submit FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last profile update (clients must submit FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "userName",
+        "personality",
+        "language",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CloudMemoryItem": {
+      "title": "CloudMemoryItem",
+      "description": "Cloud-backed long-term memory item for JARVIS/Pari.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase UID matching parent userId path variable."
+        },
+        "category": {
+          "type": "string",
+          "description": "Memory category (e.g. preference, fact, relationship, reminder)."
+        },
+        "content": {
+          "type": "string",
+          "description": "Memory text content (1..2000 chars)."
+        },
+        "importance": {
+          "type": "integer",
+          "description": "Priority score between 1 and 10."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when memory was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when memory was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "category",
+        "content",
+        "importance",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ReleaseManifest": {
+      "title": "ReleaseManifest",
+      "description": "Signed APK release manifest with SHA-256 verification and minimum version constraints.",
+      "type": "object",
+      "properties": {
+        "versionCode": {
+          "type": "integer",
+          "description": "Android numeric versionCode (> 0)."
+        },
+        "versionName": {
+          "type": "string",
+          "description": "Semantic version string (e.g. 5.5.0)."
+        },
+        "minSupportedVersionCode": {
+          "type": "integer",
+          "description": "Minimum supported versionCode before force update is triggered."
+        },
+        "forceUpdate": {
+          "type": "boolean",
+          "description": "Whether this release requires immediate installation."
+        },
+        "apkUrl": {
+          "type": "string",
+          "description": "HTTPS download URL for the signed APK."
+        },
+        "sha256": {
+          "type": "string",
+          "description": "64-character hex SHA-256 digest of the signed APK."
+        },
+        "apkSizeBytes": {
+          "type": "integer",
+          "description": "APK file size in bytes."
+        },
+        "packageName": {
+          "type": "string",
+          "description": "Expected Android package name (com.jarvis.assistant)."
+        },
+        "signingCertSha256": {
+          "type": "string",
+          "description": "Optional 64-character hex SHA-256 digest of the APK signing certificate."
+        },
+        "releaseNotes": {
+          "type": "string",
+          "description": "English release notes."
+        },
+        "releaseNotesBn": {
+          "type": "string",
+          "description": "Bengali release notes."
+        },
+        "publishedByEmail": {
+          "type": "string",
+          "description": "Email of the authorized owner/admin who published the release."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this release is actively published and downloadable."
+        },
+        "isDraft": {
+          "type": "boolean",
+          "description": "Whether this release manifest is an unpublished draft."
+        }
+      },
+      "required": [
+        "versionCode",
+        "versionName",
+        "apkUrl",
+        "sha256"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Per-user cloud profile and persona configuration document."
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": {
+        "$ref": "#/entities/CloudMemoryItem"
+      },
+      "description": "Per-user cloud-synced long-term memories subcollection."
+    },
+    "/app_update/{updateId}": {
+      "schema": {
+        "$ref": "#/entities/ReleaseManifest"
+      },
+      "description": "Latest published signed APK release manifest (app_update/latest)."
+    },
+    "/app_update_history/{historyId}": {
+      "schema": {
+        "$ref": "#/entities/ReleaseManifest"
+      },
+      "description": "Historical APK release manifests for one-tap owner rollback."
+    },
+    "/app_update_drafts/{draftId}": {
+      "schema": {
+        "$ref": "#/entities/ReleaseManifest"
+      },
+      "description": "Draft APK release manifests saved by authorized admins."
+    }
+  }
+}

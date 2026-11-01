@@ -1,0 +1,42 @@
+# Gradle files
+.gradle/
+build/
+**/build/
+.build-outputs/
+.aistudio/
+public/
+
+# Local configuration file (sdk.dir, secrets)
+local.properties
+.env
+*.env
+!.env.example
+
+# Keystore binary (debug.keystore.base64 is tracked as text)
+debug.keystore
+*.keystore
+!*.keystore.base64
+
+# Log files
+*.log
+*-debug.log
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+.shelf/
+
+# Kotlin compiler cache
+.kotlin/
+
+# Compiled binary packages
+*.apk
+*.aab
+*.ap_
+
+# OS garbage
+.DS_Store
+Thumbs.db
+desktop.ini

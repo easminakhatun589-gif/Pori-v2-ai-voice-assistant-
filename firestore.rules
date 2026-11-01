@@ -1,0 +1,182 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwnerEmail() {
+      return isSignedIn() &&
+        (
+          request.auth.token.get('email', '') == 'mdaslamlaskar14@gmail.com' ||
+          request.auth.token.get('email', '') == 'easminakhatun589@gmail.com'
+        ) &&
+        (
+          request.auth.token.get('email_verified', false) == true ||
+          request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'password'
+        );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        request.auth.token.get('role', '') == 'owner' ||
+        isOwnerEmail()
+      );
+    }
+
+    function isBlocked() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'blocked';
+    }
+
+    function isSignActive() {
+      return isSignedIn() && !isBlocked();
+    }
+
+    function isUser(uid) {
+      return isSignActive() && request.auth.uid == uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      // Admins can get or list all users; normal active users can only get their own profile
+      allow get: if (isAdmin() || isUser(userId)) && isValidId(userId);
+      allow list: if isAdmin();
+
+      // Create new user profile on sign-up
+      allow create: if isUser(userId) &&
+        isValidId(userId) &&
+        !('isAdmin' in request.resource.data) &&
+        ('userId' in request.resource.data) &&
+        request.resource.data.userId == userId &&
+        ('status' in request.resource.data) &&
+        request.resource.data.status == 'active' &&
+        ('role' in request.resource.data) &&
+        (
+          request.resource.data.role == 'user' ||
+          (request.resource.data.role == 'owner' && isOwnerEmail())
+        );
+
+      // Updates:
+      // Admins can update any field (including role, status, featureOverrides, dailyQuotaOverride)
+      // Normal active users can only update their own non-sensitive fields and CANNOT change role/status/claims
+      allow update: if (isAdmin() && isValidId(userId)) || (
+        isUser(userId) &&
+        isValidId(userId) &&
+        !('isAdmin' in request.resource.data) &&
+        ('userId' in request.resource.data) &&
+        request.resource.data.userId == resource.data.userId &&
+        ('role' in request.resource.data) &&
+        request.resource.data.role == resource.data.role &&
+        ('status' in request.resource.data) &&
+        request.resource.data.status == resource.data.status &&
+        (!('featureOverrides' in request.resource.data) || (('featureOverrides' in resource.data) && request.resource.data.featureOverrides == resource.data.featureOverrides)) &&
+        (!('dailyQuotaOverride' in request.resource.data) || (('dailyQuotaOverride' in resource.data) && request.resource.data.dailyQuotaOverride == resource.data.dailyQuotaOverride))
+      );
+
+      // Account deletion: admin or user self-deletion
+      allow delete: if (isAdmin() || (isSignedIn() && request.auth.uid == userId)) && isValidId(userId);
+
+      // User private subcollections (memories)
+      // Strict privacy rule: Admins are NOT allowed to read user memories or conversations
+      match /memories/{memoryId} {
+        allow get, write: if isUser(userId) && isValidId(userId) && isValidId(memoryId);
+        allow list: if isUser(userId) && isValidId(userId);
+      }
+
+      // Direct User Messages, Alerts & Targeted Popups from Admin
+      match /messages/{messageId} {
+        allow read: if (isAdmin() || isUser(userId)) && isValidId(messageId);
+        allow write: if isAdmin() && isValidId(messageId);
+      }
+    }
+
+    // 2. Aggregated statistics (stats/daily)
+    match /stats/{statId} {
+      allow read: if isSignActive() && isValidId(statId);
+      allow write: if (isAdmin() || isSignActive()) && isValidId(statId);
+    }
+
+    // 3. Remote configuration and App updates
+    match /config/{configId} {
+      allow read: if isSignActive() && isValidId(configId);
+      allow write: if isAdmin() && isValidId(configId);
+    }
+
+    match /config_history/{historyId} {
+      allow get: if isSignActive() && isValidId(historyId);
+      allow list: if isSignActive();
+      allow write: if isAdmin() && isValidId(historyId);
+    }
+
+    match /app_update/{updateId} {
+      // Public read so any installed client can check for updates without requiring Google Sign-In
+      allow read: if isValidId(updateId);
+      allow write: if isAdmin() &&
+        isValidId(updateId) &&
+        ('versionCode' in request.resource.data) &&
+        request.resource.data.versionCode is int &&
+        request.resource.data.versionCode > 0;
+      allow delete: if isAdmin() && isValidId(updateId);
+    }
+
+    match /app_update_history/{historyId} {
+      allow get: if isValidId(historyId);
+      allow list: if true;
+      allow write, delete: if isAdmin() && isValidId(historyId);
+    }
+
+    match /app_update_drafts/{draftId} {
+      allow read, write, delete: if isAdmin() && isValidId(draftId);
+    }
+
+    // 4. In-app Announcements, Photo Popups & Video Popups
+    match /announcements/{announcementId} {
+      // Public read so any installed app can retrieve active in-app popups & announcements
+      allow read: if isValidId(announcementId);
+      allow write: if isAdmin() && isValidId(announcementId);
+    }
+
+    // 5. User Feedback inbox
+    match /feedback/{feedbackId} {
+      // Any signed active user can create feedback
+      allow create: if isSignActive() &&
+        isValidId(feedbackId) &&
+        ('userId' in request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
+      // Admins can read all feedback; users can only read their own feedback
+      allow get: if (isAdmin() || (isSignActive() && ('userId' in resource.data) && resource.data.userId == request.auth.uid)) && isValidId(feedbackId);
+      allow list: if isAdmin();
+      // Only admins can update status or reply
+      allow update, delete: if isAdmin() && isValidId(feedbackId);
+    }
+
+    // 6. Audit logs
+    match /audit_logs/{logId} {
+      // Read-only for admins
+      allow get: if isAdmin() && isValidId(logId);
+      allow list: if isAdmin();
+      // Created by admins with required timestamp
+      allow create: if isAdmin() &&
+        isValidId(logId) &&
+        ('adminUid' in request.resource.data) &&
+        request.resource.data.adminUid == request.auth.uid &&
+        ('timestamp' in request.resource.data) &&
+        request.resource.data.timestamp is timestamp;
+      allow update, delete: if false;
+    }
+  }
+}

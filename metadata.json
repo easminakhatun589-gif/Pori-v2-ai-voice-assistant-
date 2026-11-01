@@ -1,0 +1,6 @@
+{
+  "name": "JARVIC AI",
+  "description": "Fast, natural, continuous AI voice assistant with real-time streaming and device automation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

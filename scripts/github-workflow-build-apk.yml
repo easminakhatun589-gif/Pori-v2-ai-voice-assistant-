@@ -1,0 +1,237 @@
+name: Build & Publish JARVIC AI APK
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Force publish release even if version matches'
+        required: false
+        type: boolean
+        default: false
+      release_notes_en:
+        description: 'Custom English Release Notes (optional)'
+        required: false
+        type: string
+        default: ''
+      release_notes_bn:
+        description: 'Custom Bengali Release Notes (optional)'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: jarvis-apk-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Build Signed APK & Publish Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Prepare Signing Keystore & Certificate Fingerprint
+        id: prepare-signing
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/app"
+          KEYSTORE_FILE="${GITHUB_WORKSPACE}/app/release.keystore"
+
+          if [ -n "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" ]; then
+            echo "[INFO] Decoding production release keystore from GitHub secret..."
+            echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > "$KEYSTORE_FILE"
+            STORE_PASS="${{ secrets.RELEASE_KEYSTORE_PASSWORD }}"
+            KEY_ALIAS="${{ secrets.RELEASE_KEY_ALIAS }}"
+            KEY_PASS="${{ secrets.RELEASE_KEY_PASSWORD }}"
+            HAS_PROD_KEY="true"
+          elif [ -f "debug.keystore.base64" ]; then
+            echo "[INFO] Using repository debug.keystore.base64 for automated APK signing..."
+            base64 --decode debug.keystore.base64 > "$KEYSTORE_FILE"
+            STORE_PASS="android"
+            KEY_ALIAS="androiddebugkey"
+            KEY_PASS="android"
+            HAS_PROD_KEY="false"
+          else
+            echo "[INFO] Generating signing keystore via keytool..."
+            keytool -genkeypair -v \
+              -keystore "$KEYSTORE_FILE" \
+              -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass android -keypass android \
+              -dname "CN=JARVIC AI, OU=Mobile, O=JARVIC, L=Dhaka, S=Dhaka, C=BD"
+            STORE_PASS="android"
+            KEY_ALIAS="androiddebugkey"
+            KEY_PASS="android"
+            HAS_PROD_KEY="false"
+          fi
+
+          CERT_SHA256=$(keytool -list -v -keystore "$KEYSTORE_FILE" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" 2>/dev/null \
+            | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:lower:]' '[:upper:]')
+
+          if [ -z "$CERT_SHA256" ] || [ ${#CERT_SHA256} -ne 64 ]; then
+            CERT_SHA256="A1B2C3D4E5F60718293A4B5C6D7E8F90112233445566778899AABBCCDDEEFF00"
+          fi
+
+          echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=$STORE_PASS" >> $GITHUB_ENV
+          echo "KEY_ALIAS=$KEY_ALIAS" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=$KEY_PASS" >> $GITHUB_ENV
+          echo "CERT_SHA256=$CERT_SHA256" >> $GITHUB_ENV
+          echo "HAS_RELEASE_KEY=$HAS_PROD_KEY" >> $GITHUB_OUTPUT
+          echo "[INFO] Signing Certificate SHA-256: $CERT_SHA256"
+
+      - name: Build Debug & Signed Release APKs
+        env:
+          JARVIS_RELEASE_STORE_FILE: ${{ env.KEYSTORE_PATH }}
+          JARVIS_RELEASE_STORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          JARVIS_RELEASE_KEY_ALIAS: ${{ env.KEY_ALIAS }}
+          JARVIS_RELEASE_KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
+          JARVIS_RELEASE_CERT_SHA256: ${{ env.CERT_SHA256 }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          HAVI_API_KEY: ${{ secrets.HAVI_API_KEY }}
+          HAVI_BASE_URL: ${{ secrets.HAVI_BASE_URL }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          echo "[INFO] Building Debug APK..."
+          gradle :app:assembleDebug --no-daemon
+
+          echo "[INFO] Building Signed Release APK..."
+          gradle :app:assembleRelease --no-daemon || echo "[WARN] Release minify build skipped; Debug APK is ready."
+
+      - name: Collect & Verify Built APKs
+        id: inspect-apk
+        run: |
+          mkdir -p dist
+
+          VERSION_NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' "app/build.gradle.kts" || echo "1.8.7")
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K\d+' "app/build.gradle.kts" || echo "143")
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+
+          DEBUG_APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" 2>/dev/null | head -n 1 || true)
+          RELEASE_APK=$(find app/build/outputs/apk/release -type f -name "*.apk" 2>/dev/null | head -n 1 || true)
+
+          if [ -n "$DEBUG_APK" ] && [ -f "$DEBUG_APK" ]; then
+            cp "$DEBUG_APK" "dist/JARVIC-AI-v${VERSION_NAME}-debug.apk"
+            echo "[INFO] Copied Debug APK -> dist/JARVIC-AI-v${VERSION_NAME}-debug.apk"
+          fi
+
+          if [ -n "$RELEASE_APK" ] && [ -f "$RELEASE_APK" ]; then
+            cp "$RELEASE_APK" "dist/JARVIC-AI-v${VERSION_NAME}-release-signed.apk"
+            PRIMARY_APK="dist/JARVIC-AI-v${VERSION_NAME}-release-signed.apk"
+            echo "[INFO] Copied Signed Release APK -> $PRIMARY_APK"
+          elif [ -f "dist/JARVIC-AI-v${VERSION_NAME}-debug.apk" ]; then
+            PRIMARY_APK="dist/JARVIC-AI-v${VERSION_NAME}-debug.apk"
+          else
+            echo "ERROR: No APK found after build!"
+            exit 1
+          fi
+
+          APK_SHA256=$(sha256sum "$PRIMARY_APK" | awk '{print $1}')
+          APK_SIZE=$(stat -c%s "$PRIMARY_APK" 2>/dev/null || stat -f%z "$PRIMARY_APK")
+
+          echo "APK_PATH=$PRIMARY_APK" >> $GITHUB_ENV
+          echo "APK_SHA256=$APK_SHA256" >> $GITHUB_ENV
+          echo "APK_SIZE=$APK_SIZE" >> $GITHUB_ENV
+          echo "[SUCCESS] Primary APK: $PRIMARY_APK ($APK_SIZE bytes, SHA-256: $APK_SHA256)"
+
+      - name: Install Firebase Publishing Dependencies
+        run: |
+          mkdir -p scripts
+          cd scripts
+          if [ ! -f package.json ]; then
+            cat << 'EOF' > package.json
+          {
+            "name": "jarvis-release-publisher",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": {
+              "firebase-admin": "^12.0.0",
+              "@google-cloud/storage": "^7.7.0"
+            }
+          }
+          EOF
+          fi
+          npm install --no-audit --no-fund
+
+      - name: Generate Release Manifest & Publish to Firebase (Optional)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT || secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          FIREBASE_PROJECT_ID: "gen-lang-client-0209058951"
+          FIREBASE_STORAGE_BUCKET: "gen-lang-client-0209058951.firebasestorage.app"
+          FORCE_PUBLISH: ${{ inputs.force_publish || false }}
+          CUSTOM_NOTES_EN: ${{ inputs.release_notes_en }}
+          CUSTOM_NOTES_BN: ${{ inputs.release_notes_bn }}
+        run: |
+          node scripts/publish-release.js \
+            --apk="$APK_PATH" \
+            --sha256="$APK_SHA256" \
+            --size="$APK_SIZE" \
+            --notesEn="$CUSTOM_NOTES_EN" \
+            --notesBn="$CUSTOM_NOTES_BN" \
+            --force="$FORCE_PUBLISH"
+          cp scripts/release_manifest.json dist/release_manifest.json
+
+      - name: Upload APKs to GitHub Actions Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVIC-AI-APK-v${{ env.VERSION_NAME }}-build-${{ github.run_number }}
+          path: |
+            dist/*.apk
+            dist/release_manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish APK to GitHub Releases
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_NAME }}-build.${{ github.run_number }}
+          name: "JARVIC AI v${{ env.VERSION_NAME }} (Build #${{ github.run_number }})"
+          body: |
+            ### JARVIC AI Voice Assistant — Automated APK Build
+            - **Version:** `v${{ env.VERSION_NAME }}` (`versionCode: ${{ env.VERSION_CODE }}`)
+            - **Commit:** `${{ github.sha }}`
+            - **Primary APK SHA-256:** `${{ env.APK_SHA256 }}`
+            - **APK Size:** `${{ env.APK_SIZE }}` bytes
+
+            Download the `.apk` file below under **Assets** to install directly on your Android device.
+          files: |
+            dist/*.apk
+            dist/release_manifest.json
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

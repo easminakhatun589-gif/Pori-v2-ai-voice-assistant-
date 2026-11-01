@@ -1,0 +1,1488 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E8EEFF"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- Guideline separating the upper Hero Character Stage from the lower Curved Deck -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineHeroBottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.56" />
+
+    <!-- 1. Full-Bleed Upper Hero Character Stage (Live 2D Animated Lips, Eyes, Head & Hand) -->
+    <com.jarvis.assistant.ui.widget.LiveHeroAvatarView
+        android:id="@+id/ivHeroBackground"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:src="@drawable/bg_jarvis_pro_hero_stage"
+        android:scaleType="centerCrop"
+        android:contentDescription="AI Assistant Hero Stage"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineHeroBottom"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Subtle top scrim for crystal-clear header readability -->
+    <View
+        android:id="@+id/glowOrbTopRight"
+        android:layout_width="0dp"
+        android:layout_height="90dp"
+        android:background="#22081026"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <View
+        android:id="@+id/glowOrbCenterLeft"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <View
+        android:id="@+id/glowOrbBottom"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 2. Lower Curved White-Lavender Deck Arching Beneath the Center Orb -->
+    <com.jarvis.assistant.ui.widget.CurvedHeroDeckView
+        android:id="@+id/curvedHeroDeck"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="-44dp"
+        app:layout_constraintTop_toTopOf="@id/guidelineHeroBottom"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 3. Top-Left Branding Header (Winged A Logo + JARVIC AI + Subtitle) -->
+    <LinearLayout
+        android:id="@+id/layoutTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:id="@+id/ivHeaderJarvisLogo"
+            android:layout_width="56dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_angel_logo_wings"
+            android:scaleType="fitCenter"
+            android:contentDescription="JARVIC AI Logo" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="4dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvBrandName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="JARVIC AI"
+                    android:textColor="#FFFFFF"
+                    android:textSize="21sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:shadowColor="#AA818CF8"
+                    android:shadowDx="0"
+                    android:shadowDy="2"
+                    android:shadowRadius="8"
+                    android:includeFontPadding="false" />
+
+                <!-- Conditionally displayed ADMIN Badge in HUD Header -->
+                <TextView
+                    android:id="@+id/tvHeaderAdminBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_admin_badge"
+                    android:text="👑 ADMIN"
+                    android:textColor="#FFD700"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvBrandSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your Smart AI Assistant"
+                android:textColor="#F1F5F9"
+                android:textSize="10.5sp"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/tvGreeting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Always With You 💙"
+                android:textColor="#E2E8F0"
+                android:textSize="10.5sp"
+                android:fontFamily="sans-serif"
+                android:includeFontPadding="false"
+                android:layout_marginTop="1dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 4. Top-Right Action Buttons (Chat & Settings hidden per user request; PRO & Profile visible) -->
+    <LinearLayout
+        android:id="@+id/layoutTopRightButtons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginEnd="14dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageButton
+            android:id="@+id/btnTopChat"
+            android:layout_width="46dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_angel_top_btn"
+            android:src="@drawable/ic_nav_chat"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            app:tint="#FFFFFF"
+            android:visibility="gone"
+            android:contentDescription="Chat" />
+
+        <LinearLayout
+            android:id="@+id/btnHudAgentQueueToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="7dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/bg_angel_top_btn"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Toggle HUD Task Execution Dashboard">
+
+            <View
+                android:id="@+id/dotHudQueueIndicator"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:background="@drawable/bg_jarvis_mic_center"
+                android:backgroundTint="#38BDF8" />
+
+            <TextView
+                android:id="@+id/tvHudAgentQueueBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:text="Queue"
+                android:textColor="#F8FAFC"
+                android:textSize="10.5sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnTopPro"
+            android:layout_width="50dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_angel_top_btn"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="PRO">
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_angel_crown_pro"
+                android:contentDescription="Crown" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PRO"
+                android:textColor="#FACC15"
+                android:textSize="8.5sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:includeFontPadding="false" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnTopProfile"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="7dp"
+            android:background="@drawable/bg_angel_top_circle_btn"
+            android:src="@drawable/ic_user_profile"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            app:tint="#38BDF8"
+            android:contentDescription="Profile" />
+
+        <ImageButton
+            android:id="@+id/btnTopSettings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="7dp"
+            android:background="@drawable/bg_angel_top_circle_btn"
+            android:src="@drawable/ic_nav_settings"
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            app:tint="#FFFFFF"
+            android:visibility="gone"
+            android:contentDescription="Settings" />
+    </LinearLayout>
+
+    <!-- 5. Left Neon Speech Bubble ("Hi! I'm Angel 👋 / How can I help you today?") -->
+    <LinearLayout
+        android:id="@+id/cardSpeechBubble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_angel_speech_bubble"
+        android:paddingStart="13dp"
+        android:paddingEnd="13dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="9dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toBottomOf="@id/layoutTitle"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/tvSpeechTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hi! I'm Jarvic AI 👋"
+            android:textColor="#FFFFFF"
+            android:textSize="13.5sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/tvSpeechSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="How can I help you today?"
+            android:textColor="#E2E8F0"
+            android:textSize="10.5sp"
+            android:fontFamily="sans-serif"
+            android:includeFontPadding="false"
+            android:layout_marginTop="3dp" />
+    </LinearLayout>
+
+    <!-- 6. Left Online Status Pill + Real Country Logo & Name + Profile Option (Positioned above Screen Share option) -->
+    <LinearLayout
+        android:id="@+id/layoutOnlineBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_angel_online_pill"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="14dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toBottomOf="@id/cardSpeechBubble"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <View
+            android:id="@+id/dotStatusGlow"
+            android:layout_width="9dp"
+            android:layout_height="9dp"
+            android:background="@drawable/bg_jarvis_mic_center"
+            android:backgroundTint="#22C55E" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="6dp">
+
+            <!-- Online Title + Real Country Logo & Country Name Row -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvOnlineTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Online"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:includeFontPadding="false" />
+
+                <!-- Real Country Flag Logo + Real Country Name Pill beside Online -->
+                <LinearLayout
+                    android:id="@+id/layoutOnlineCountryBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/bg_jarvis_status_badge"
+                    android:paddingStart="5dp"
+                    android:paddingEnd="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/ivOnlineCountryFlag"
+                        android:layout_width="17dp"
+                        android:layout_height="12dp"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/ic_settings_language"
+                        android:contentDescription="Country Flag Logo" />
+
+                    <TextView
+                        android:id="@+id/tvOnlineCountryName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="Location"
+                        android:textColor="#F8FAFC"
+                        android:textSize="9.5sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxWidth="74dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:includeFontPadding="false" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Status Subtitle + Quick Profile Option Pill -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="3dp">
+
+                <TextView
+                    android:id="@+id/tvListeningStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ready to help"
+                    android:textColor="#E2E8F0"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif"
+                    android:includeFontPadding="false" />
+
+                <!-- Quick Profile Option Pill beside Status -->
+                <LinearLayout
+                    android:id="@+id/btnOnlineProfileOption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_jarvis_status_badge"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Profile Option">
+
+                    <ImageView
+                        android:layout_width="11dp"
+                        android:layout_height="11dp"
+                        android:src="@drawable/ic_user_profile"
+                        app:tint="#38BDF8"
+                        android:contentDescription="Profile" />
+
+                    <TextView
+                        android:id="@+id/tvOnlineProfileLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="Profile"
+                        android:textColor="#38BDF8"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 7. Right Frosted Glass Real-Time Weather Card (Positioned on top right hero stage) -->
+    <LinearLayout
+        android:id="@+id/cardWeather"
+        android:layout_width="148dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_angel_weather_glass"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:layout_marginEnd="14dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toTopOf="@id/layoutOnlineBadge"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/ivWeatherIcon"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_angel_weather_sun"
+                android:contentDescription="Weather" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:id="@+id/tvTemperature"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--°C"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textStyle="bold"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:id="@+id/tvWeatherCondition"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Live Weather"
+                    android:textColor="#F8FAFC"
+                    android:textSize="10.5sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="1dp" />
+
+                <TextView
+                    android:id="@+id/tvWeatherCity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📍 Updating..."
+                    android:textColor="#E2E8F0"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="1dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="6dp"
+            android:background="#38FFFFFF" />
+
+        <TextView
+            android:id="@+id/tvWeatherDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fetching real-time weather...\n💧 Live forecast"
+            android:textColor="#F1F5F9"
+            android:textSize="10sp"
+            android:lineSpacingExtra="2dp"
+            android:fontFamily="sans-serif"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+
+    <!-- 8. Center Glowing Waveform Orb (Anchored at the Crest of the Curved Deck) -->
+    <FrameLayout
+        android:id="@+id/orbContainer"
+        android:layout_width="114dp"
+        android:layout_height="114dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="@id/guidelineHeroBottom"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineHeroBottom"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <View
+            android:id="@+id/orbHaloRing"
+            android:layout_width="114dp"
+            android:layout_height="114dp"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <View
+            android:id="@+id/orbWebView"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:background="@android:color/transparent" />
+
+        <com.jarvis.assistant.ui.widget.WaveformOrbView
+            android:id="@+id/waveformOrbView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+    <!-- 9. "Tap or Hold to Talk" Frosted Pill Below Center Orb -->
+    <LinearLayout
+        android:id="@+id/layoutStatusIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="38dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_angel_talk_pill"
+        android:paddingStart="16dp"
+        android:paddingEnd="18dp"
+        android:elevation="4dp"
+        android:layout_marginTop="2dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toBottomOf="@id/orbContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_mic_jarvis"
+            app:tint="#4F46E5"
+            android:contentDescription="Mic" />
+
+        <TextView
+            android:id="@+id/tvHoldHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap or Hold to Talk"
+            android:textColor="#2D3663"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginStart="7dp"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+
+    <!-- 10. Quick Action Grid (4 White-Lavender Cards: Screen, Memories, Language, Clock) -->
+    <LinearLayout
+        android:id="@+id/layoutActionGrid"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginTop="14dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutStatusIndicator"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Card 1: Screen Share -->
+        <LinearLayout
+            android:id="@+id/btnScreenShareQuick"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/bg_angel_quick_card"
+            android:elevation="3dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="9dp"
+            android:paddingEnd="7dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Start or stop screen sharing">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_angel_screen_share"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Screen" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Screen"
+                    android:textColor="#1E293B"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:singleLine="true"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:id="@+id/tvQuickScreenShareStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Share screen"
+                    android:textColor="#64748B"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="#475569"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <!-- Card 2: Memories -->
+        <LinearLayout
+            android:id="@+id/btnSavedMemories"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/bg_angel_quick_card"
+            android:elevation="3dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="9dp"
+            android:paddingEnd="7dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_angel_memories_layers"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Memories" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Memories"
+                    android:textColor="#1E293B"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:singleLine="true"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recall Core"
+                    android:textColor="#64748B"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="#475569"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <!-- Card 3: Language -->
+        <LinearLayout
+            android:id="@+id/btnConversationLanguageQuick"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/bg_angel_quick_card"
+            android:elevation="3dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="9dp"
+            android:paddingEnd="7dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_angel_language_globe"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Language" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Language"
+                    android:textColor="#1E293B"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:singleLine="true"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:id="@+id/tvQuickLanguageStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Auto"
+                    android:textColor="#64748B"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="#475569"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <!-- Card 4: Clock & Voice Alarms -->
+        <LinearLayout
+            android:id="@+id/btnClockQuick"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/bg_angel_quick_card"
+            android:elevation="3dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="6dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Open Clock and Voice Alarms">
+
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/ic_clock_alarm"
+                android:layout_marginEnd="5dp"
+                android:contentDescription="Clock" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Clock"
+                    android:textColor="#1E293B"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium"
+                    android:singleLine="true"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:id="@+id/tvQuickClockStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Alarms"
+                    android:textColor="#64748B"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif"
+                    android:singleLine="true"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="#475569"
+                android:contentDescription="Open" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 11. Explore JARVIC AI Cosmic Planet Banner Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardExploreBanner"
+        android:layout_width="0dp"
+        android:layout_height="62dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginTop="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="3dp"
+        app:strokeWidth="1.5dp"
+        app:strokeColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/layoutActionGrid"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/bg_explore_planet_banner"
+                android:scaleType="centerCrop"
+                android:contentDescription="Explore Banner Art" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_angel_sparkles"
+                    android:contentDescription="Sparkles" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Explore JARVIC AI"
+                        android:textColor="#1E293B"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chat  •  Create  •  Code  •  Learn  •  More..."
+                        android:textColor="#475569"
+                        android:textSize="11sp"
+                        android:fontFamily="sans-serif"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:includeFontPadding="false"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Prominent Actionable Error Card Overlay (Floats Upon Orb) -->
+    <LinearLayout
+        android:id="@+id/cardLiveError"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_jarvis_error_card"
+        android:padding="20dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:elevation="32dp"
+        android:translationZ="32dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/orbContainer"
+        app:layout_constraintBottom_toBottomOf="@id/orbContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/ivLiveErrorIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_warning"
+                app:tint="#EF4444" />
+
+            <TextView
+                android:id="@+id/tvLiveErrorTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:text="API KEY ERROR"
+                android:textColor="#EF4444"
+                android:textSize="14sp"
+                android:letterSpacing="0.08"
+                android:fontFamily="sans-serif-medium"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnDismissLiveError"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_close"
+                app:tint="?attr/themeTextMuted"
+                android:contentDescription="Dismiss" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvLiveErrorMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Google rejected the API key: 400 Bad Request. Please update your API key in Settings."
+            android:textColor="?attr/themeTextPrimary"
+            android:textSize="13sp"
+            android:lineSpacingExtra="3dp" />
+
+        <Button
+            android:id="@+id/btnFixLiveError"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginTop="14dp"
+            android:paddingHorizontal="20dp"
+            android:text="OPEN API SETTINGS"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_jarvis_pill_button"
+            app:backgroundTint="@null"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- 12. HUD Task Execution Dashboard (Visualizes Multi-Task Queue: Completed, Running, Waiting, Pending) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardHudTaskDashboard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginTop="66dp"
+        android:elevation="30dp"
+        android:translationZ="30dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:cardBackgroundColor="#F8FAFC"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="16dp"
+        app:strokeColor="#38BDF8"
+        app:strokeWidth="1.5dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <!-- Header Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <View
+                    android:id="@+id/dotHudDashboardActive"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_jarvis_mic_center"
+                    android:backgroundTint="#2563EB" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvHudTaskDashboardTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TASK EXECUTION DASHBOARD"
+                        android:textColor="#0F172A"
+                        android:textSize="12.5sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false" />
+
+                    <TextView
+                        android:id="@+id/tvHudTaskQueueSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Multi-Task Execution Queue • Ready"
+                        android:textColor="#475569"
+                        android:textSize="11sp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:includeFontPadding="false" />
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnCloseHudTaskDashboard"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close"
+                    android:padding="12dp"
+                    app:tint="#475569"
+                    android:contentDescription="Close HUD Task Execution Dashboard" />
+            </LinearLayout>
+
+            <!-- Status Indicators Summary Row (Completed, Running, Waiting for approval, Pending) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvHudBadgeCompleted"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_angel_quick_card"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:text="✓ 0 Done"
+                    android:textColor="#15803D"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/tvHudBadgeRunning"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_angel_quick_card"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:text="● 0 Running"
+                    android:textColor="#1D4ED8"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/tvHudBadgeWaiting"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_angel_quick_card"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:text="⚠ 0 Approval"
+                    android:textColor="#B45309"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/tvHudBadgePending"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_angel_quick_card"
+                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="6dp"
+                    android:gravity="center"
+                    android:text="○ 0 Pending"
+                    android:textColor="#475569"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <!-- Overall Progress Bar -->
+            <ProgressBar
+                android:id="@+id/progressHudTaskQueue"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="8dp"
+                android:max="100"
+                android:progress="0"
+                android:progressTint="#2563EB"
+                android:progressBackgroundTint="#CBD5E1" />
+
+            <!-- Scrollable Queue List -->
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/scrollHudTaskSteps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:maxHeight="190dp"
+                android:fadeScrollbars="false"
+                android:scrollbars="vertical">
+
+                <LinearLayout
+                    android:id="@+id/containerHudTaskSteps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </androidx.core.widget.NestedScrollView>
+
+            <!-- Action Controls Row (48dp touch targets) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+
+                <Button
+                    android:id="@+id/btnHudLoadDemoQueue"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1.2"
+                    android:layout_marginEnd="5dp"
+                    android:text="▶ Queue 5"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    app:backgroundTint="#2563EB"
+                    android:contentDescription="Load and execute multi-task queue in HUD" />
+
+                <Button
+                    android:id="@+id/btnHudResumeQueue"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    android:text="↻ Resume"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#1E40AF"
+                    app:backgroundTint="#DBEAFE"
+                    android:contentDescription="Resume paused or pending task queue" />
+
+                <Button
+                    android:id="@+id/btnHudStopQueue"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="0.9"
+                    android:layout_marginEnd="5dp"
+                    android:text="✕ Stop"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#B91C1C"
+                    app:backgroundTint="#FEE2E2"
+                    android:contentDescription="Stop active task queue" />
+
+                <Button
+                    android:id="@+id/btnHudOpenAgentFull"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Full View"
+                    android:textAllCaps="false"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#0F172A"
+                    app:backgroundTint="#E2E8F0"
+                    android:contentDescription="Open full Agent Dashboard Activity" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 13. HUD High-Risk Action Approval Dialog Overlay (Appears before posting, deleting, or sending attachments) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardHudApprovalDialog"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:elevation="38dp"
+        android:translationZ="38dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="24dp"
+        app:strokeColor="#F59E0B"
+        app:strokeWidth="2dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <!-- Risk Header Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/ivHudApprovalIcon"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/ic_settings_shield"
+                    app:tint="#D97706"
+                    android:contentDescription="High-Risk Action Warning Icon" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvHudApprovalRiskCategory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HIGH RISK • USER CONFIRMATION REQUIRED"
+                        android:textColor="#D97706"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.06"
+                        android:fontFamily="sans-serif-black"
+                        android:includeFontPadding="false" />
+
+                    <TextView
+                        android:id="@+id/tvHudApprovalStepBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Task 3/5 • Waiting for approval"
+                        android:textColor="#475569"
+                        android:textSize="11sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:includeFontPadding="false" />
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnDismissHudApproval"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close"
+                    android:padding="12dp"
+                    app:tint="#64748B"
+                    android:contentDescription="Minimize Approval Dialog" />
+            </LinearLayout>
+
+            <!-- Action Title -->
+            <TextView
+                android:id="@+id/tvHudApprovalTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Publish Comment on Facebook"
+                android:textColor="#0F172A"
+                android:textSize="15.5sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <!-- Detailed Explanation -->
+            <TextView
+                android:id="@+id/tvHudApprovalDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Jarvic paused before executing this high-risk action. Please verify the target and content below."
+                android:textColor="#334155"
+                android:textSize="12.5sp"
+                android:lineSpacingExtra="2dp" />
+
+            <!-- Content / Payload Preview Box -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_angel_quick_card"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ACTION PAYLOAD &amp; TARGET PREVIEW"
+                    android:textColor="#64748B"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05" />
+
+                <TextView
+                    android:id="@+id/tvHudApprovalPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Target: Facebook"
+                    android:textColor="#0F172A"
+                    android:textSize="12.5sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:lineSpacingExtra="2dp" />
+            </LinearLayout>
+
+            <!-- Voice Confirmation Hint -->
+            <TextView
+                android:id="@+id/tvHudApprovalVoiceHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="🎙️ Say &quot;Confirm&quot; to approve or &quot;Cancel&quot; to reject"
+                android:textColor="#2563EB"
+                android:textSize="11.5sp"
+                android:textStyle="bold"
+                android:gravity="center" />
+
+            <!-- Primary Confirmation Buttons (48dp touch targets) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <Button
+                    android:id="@+id/btnHudRejectCancel"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="✕ Reject"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    app:backgroundTint="#DC2626"
+                    android:contentDescription="Reject high-risk action" />
+
+                <Button
+                    android:id="@+id/btnHudApproveConfirm"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1.35"
+                    android:layout_marginStart="6dp"
+                    android:text="✓ Approve &amp; Execute"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    app:backgroundTint="#16A34A"
+                    android:contentDescription="Approve and execute high-risk action" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

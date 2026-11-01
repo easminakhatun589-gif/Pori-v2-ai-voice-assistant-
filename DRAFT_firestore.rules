@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['userId', 'userName', 'personality', 'language', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly(['userId', 'userName', 'personality', 'language', 'voiceTone', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 80 &&
+             data.personality is string && data.personality.size() >= 1 && data.personality.size() <= 40 &&
+             data.language is string && data.language.size() >= 1 && data.language.size() <= 60 &&
+             (!('voiceTone' in data) || data.voiceTone == null || (data.voiceTone is string && data.voiceTone.size() <= 40)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCloudMemoryItem(data, userId) {
+      return data.keys().hasAll(['userId', 'category', 'content', 'importance', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly(['userId', 'category', 'content', 'importance', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId == userId && data.userId == request.auth.uid &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 2000 &&
+             data.importance is int && data.importance >= 1 && data.importance <= 10 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['userName', 'personality', 'language', 'voiceTone', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /memories/{memoryId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(memoryId) && resource.data.userId == request.auth.uid;
+        allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(memoryId) &&
+                         isValidCloudMemoryItem(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(memoryId) &&
+                         isValidCloudMemoryItem(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['category', 'content', 'importance', 'updatedAt']);
+
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(memoryId) && existing().userId == request.auth.uid;
+      }
+    }
+  }
+}
